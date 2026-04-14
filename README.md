@@ -87,5 +87,3 @@ Contributions to the MERN-BookStore are welcome! Please follow these steps:
 5. 🔄 Create a pull request to the main repository.
 
 Contributions and feedback are welcome! If you find any issues or have suggestions for improvements, please feel free to submit a pull request or open an issue. Please follow the contribution guidelines.
-
-👨‍💻 **Author**: Nishant (@nishant219)
