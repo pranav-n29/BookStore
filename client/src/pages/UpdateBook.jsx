@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Spinner from '../components/Spinner';
 import BackButton from '../components/BackButton';
-import { SnackbarProvider, useSnackbar } from 'notistack';
+import { useSnackbar } from 'notistack';
+import axiosClient, { getAuthHeaders } from '../api/axiosClient';
 
 const UpdateBook = () => {
   const [title, setTitle] = useState('');
@@ -12,6 +12,7 @@ const UpdateBook = () => {
   const [year, setYear] = useState('');
   const [pages, setPages] = useState('');
   const [publisher, setPublisher] = useState('');
+  const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
@@ -21,14 +22,17 @@ const UpdateBook = () => {
     const fetchBook = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`https://bookstore-server-po8m.onrender.com/api/v1/book/${id}`);
-        const { title, genre, author, year, pages, publisher } = res.data.data;
+        const res = await axiosClient.get(`/book/${id}`, {
+          headers: getAuthHeaders(),
+        });
+        const { title, genre, author, year, pages, publisher, description: fetchedDescription } = res.data.data;
         setTitle(title);
         setGenre(genre);
         setAuthor(author);
         setYear(year);
         setPages(pages);
         setPublisher(publisher);
+        setDescription(fetchedDescription || '');
       } catch (error) {
         enqueueSnackbar('Error fetching book', { variant: 'error' });
         console.error('Error fetching book:', error);
@@ -37,7 +41,7 @@ const UpdateBook = () => {
       }
     };
     fetchBook();
-  }, [id]);
+  }, [id, enqueueSnackbar]);
 
   if (loading) {
     return <Spinner />;
@@ -47,14 +51,21 @@ const UpdateBook = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.put(`https://bookstore-server-po8m.onrender.com/api/v1/update/${id}`, {
-        title,
-        genre,
-        author,
-        year,
-        pages,
-        publisher,
-      });
+      await axiosClient.put(
+        `/update/${id}`,
+        {
+          title,
+          genre,
+          author,
+          year,
+          pages,
+          publisher,
+          description,
+        },
+        {
+          headers: getAuthHeaders(),
+        }
+      );
       navigate('/');
       enqueueSnackbar('Book updated successfully', { variant: 'success' });
     } catch (error) {
@@ -66,13 +77,13 @@ const UpdateBook = () => {
   };
 
   return (
-    <div className="p-4">
+    <div className="max-w-3xl mx-auto px-4 py-8">
       <BackButton />
-      <h1 className="text-3xl my-4">Update Book</h1>
-      <form onSubmit={handleEditBook}>
-        <div className="grid grid-cols-2 gap-4">
+      <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 my-4">Update Book</h1>
+      <form onSubmit={handleEditBook} className='bg-white/90 border border-blue-100 rounded-3xl p-6 md:p-8 shadow-sm'>
+        <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="title" className="text-xl text-gray-500">
+            <label htmlFor="title" className="text-sm font-semibold text-slate-600">
               Title
             </label>
             <input
@@ -81,11 +92,11 @@ const UpdateBook = () => {
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="border-2 border-slate-400 rounded-md p-2 w-full"
+              className="border border-blue-100 rounded-xl p-3 w-full mt-1 outline-none focus:ring-2 focus:ring-blue-200"
             />
           </div>
           <div>
-            <label htmlFor="genre" className="text-xl text-gray-500">
+            <label htmlFor="genre" className="text-sm font-semibold text-slate-600">
               Genre
             </label>
             <input
@@ -94,11 +105,11 @@ const UpdateBook = () => {
               id="genre"
               value={genre}
               onChange={(e) => setGenre(e.target.value)}
-              className="border-2 border-slate-400 rounded-md p-2 w-full"
+              className="border border-blue-100 rounded-xl p-3 w-full mt-1 outline-none focus:ring-2 focus:ring-blue-200"
             />
           </div>
           <div>
-            <label htmlFor="author" className="text-xl text-gray-500">
+            <label htmlFor="author" className="text-sm font-semibold text-slate-600">
               Author
             </label>
             <input
@@ -107,11 +118,11 @@ const UpdateBook = () => {
               id="author"
               value={author}
               onChange={(e) => setAuthor(e.target.value)}
-              className="border-2 border-slate-400 rounded-md p-2 w-full"
+              className="border border-blue-100 rounded-xl p-3 w-full mt-1 outline-none focus:ring-2 focus:ring-blue-200"
             />
           </div>
           <div>
-            <label htmlFor="year" className="text-xl text-gray-500">
+            <label htmlFor="year" className="text-sm font-semibold text-slate-600">
               Publish Year
             </label>
             <input
@@ -120,11 +131,11 @@ const UpdateBook = () => {
               id="year"
               value={year}
               onChange={(e) => setYear(e.target.value)}
-              className="border-2 border-slate-400 rounded-md p-2 w-full"
+              className="border border-blue-100 rounded-xl p-3 w-full mt-1 outline-none focus:ring-2 focus:ring-blue-200"
             />
           </div>
           <div>
-            <label htmlFor="pages" className="text-xl text-gray-500">
+            <label htmlFor="pages" className="text-sm font-semibold text-slate-600">
               Pages
             </label>
             <input
@@ -133,11 +144,11 @@ const UpdateBook = () => {
               id="pages"
               value={pages}
               onChange={(e) => setPages(e.target.value)}
-              className="border-2 border-slate-400 rounded-md p-2 w-full"
+              className="border border-blue-100 rounded-xl p-3 w-full mt-1 outline-none focus:ring-2 focus:ring-blue-200"
             />
           </div>
           <div>
-            <label htmlFor="publisher" className="text-xl text-gray-500">
+            <label htmlFor="publisher" className="text-sm font-semibold text-slate-600">
               Publisher
             </label>
             <input
@@ -146,13 +157,25 @@ const UpdateBook = () => {
               id="publisher"
               value={publisher}
               onChange={(e) => setPublisher(e.target.value)}
-              className="border-2 border-slate-400 rounded-md p-2 w-full"
+              className="border border-blue-100 rounded-xl p-3 w-full mt-1 outline-none focus:ring-2 focus:ring-blue-200"
             />
           </div>
         </div>
+        <div className='mt-4'>
+          <label htmlFor="description" className="text-sm font-semibold text-slate-600">Description</label>
+          <textarea
+            id='description'
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className='border border-blue-100 rounded-xl p-3 w-full mt-1 h-36 outline-none focus:ring-2 focus:ring-blue-200 resize-none'
+            maxLength={1200}
+            required
+          />
+          <p className='text-right text-xs text-slate-500 mt-1'>{description.length}/1200</p>
+        </div>
         <button
           type="submit"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl mt-5 transition-colors"
         >
           Update
         </button>

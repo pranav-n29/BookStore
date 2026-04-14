@@ -16,27 +16,33 @@ exports.home=bigPromise(async(req,res,next)=>{
 
 //create book
 exports.createBook=bigPromise(async(req,res,next)=>{
-
-    const{title, author, genre, year, pages, publisher}=req.body;
-    if(!title || !author || !genre || !year || !pages || !publisher){
-        return next(new customError("Please provide all the required fields", 400));
+  try {
+    const{title, author, genre, year, pages, publisher, description}=req.body;
+    if(!title || !author || !genre || !year || !pages || !publisher || !description){
+      return next(new customError("Please provide all the required fields", 400));
     }
     const newBook=new bookModel({
-        title, author, genre, year, pages, publisher
+      title, author, genre, year, pages, publisher, description, createdBy: req.user._id
     });
-    //console.log(newBook);
     const book=await newBook.save();
     res.status(201).json({
-        success:true,
-        data:book
+      success:true,
+      data:book
     });
+  } catch (error) {
+    if (error.code === 11000) {
+      return next(new customError("A book with this title already exists for this user.", 409));
+    }
+
+    return next(error);
+  }
 
 });
 
 
 //get all books
 exports.getAllBooks=bigPromise(async(req,res,next)=>{
-    const books=await bookModel.find();
+  const books=await bookModel.find({ createdBy: req.user._id });
     res.status(200).json({
         success:true,
         count:books.length,
@@ -47,7 +53,7 @@ exports.getAllBooks=bigPromise(async(req,res,next)=>{
 
 //get single book
 exports.getSingleBook=bigPromise(async(req,res,next)=>{
-    const book=await bookModel.findById(req.params.id);
+  const book=await bookModel.findOne({ _id: req.params.id, createdBy: req.user._id });
     if(!book){
         return next(new customError(`Book with id ${req.params.id} not found`, 404));
     }
@@ -62,16 +68,16 @@ exports.getSingleBook=bigPromise(async(req,res,next)=>{
 exports.updateBook = bigPromise(async (req, res, next) => {
     try {
       const bookId = req.params.id;
-      const { title, author, genre, year, pages, publisher } = req.body;
+  const { title, author, genre, year, pages, publisher, description } = req.body;
   
       if (!bookId) {
         return next(new customError("Please provide book id", 400));
       }
-      if (!title || !author || !genre || !year || !pages || !publisher) {
+      if (!title || !author || !genre || !year || !pages || !publisher || !description) {
         return next(new customError("Please provide all the required fields", 400));
       }
   
-      const updatedBook = await bookModel.findByIdAndUpdate(bookId, req.body, {
+      const updatedBook = await bookModel.findOneAndUpdate({ _id: bookId, createdBy: req.user._id }, req.body, {
         new: true,
         runValidators: true,
       });
@@ -106,7 +112,7 @@ exports.deleteBook=bigPromise(async(req,res,next)=>{
     if(!bookId){
         return next(new customError("Please provide book id", 400));
     }
-    const deletedBook=await bookModel.findByIdAndDelete(bookId);
+    const deletedBook=await bookModel.findOneAndDelete({ _id: bookId, createdBy: req.user._id });
     if(!deletedBook){
         return next(new customError(`Book with id ${req.params.id} not found`, 404));
     }

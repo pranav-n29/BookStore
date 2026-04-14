@@ -6,7 +6,6 @@ const BookSchema = mongoose.Schema({
         type: String,
         required: [true, 'Book title is required'],
         maxlength: [50, 'Book title cannot exceed 50 characters'],
-        unique: true,
         trim: true
     },
     author:{
@@ -33,13 +32,24 @@ const BookSchema = mongoose.Schema({
         required: true,
         trim: true
     },
+    description: {
+        type: String,
+        required: [true, 'Book description is required'],
+        maxlength: [1200, 'Book description cannot exceed 1200 characters'],
+        trim: true
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     create_date:{
         type: Date,
         default: Date.now
     }
 });
 
-
+BookSchema.index({ title: 1, createdBy: 1 }, { unique: true });
 
 module.exports = mongoose.model('Book', BookSchema);
    
